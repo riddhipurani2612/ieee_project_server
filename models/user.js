@@ -1,6 +1,7 @@
 const {Int32} = require("bson");
 const mongoose = require("mongoose");
-const user_signup_schema = new mongoose.Schema(
+
+const user_schema = new mongoose.Schema(
     {
         first_name : {
             type : String,
@@ -8,38 +9,44 @@ const user_signup_schema = new mongoose.Schema(
         },
         last_name : {
             type : String,
+            required : true
         },
         role : {
             type : String,
-            required : true,
+            required : true
         },
         address : {
             type : String,
-            required : true,
+            required : true
         },
-        contactno : {
-            type : String,
-        },
-        profileimage : {
+        conatct : {
             type : String,
         },
         email : {
-            type : String,
+            type :String,
+            required : true
         },
-        work_place : {
+        workplace : {
             type : String,
-            required : true,
+            required : true
         },
         designation : {
             type : String,
-            required : true,
         },
-        work_details : {
+        username : {
             type : String,
+            required : true
+        },
+        password : {
+            type :String,
+            required : true
+        },
+        subscription :{
+            type : String
         }
     },
     {
-        collection : "user_signup",
+        collection : "user",
     }
-);
-module.exports = mongoose.model("user_signup", user_signup_schema);
+)
+module.exports = mongoose.model("user", user_schema);
