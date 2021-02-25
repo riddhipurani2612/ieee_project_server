@@ -7,6 +7,7 @@ const bodyParser = require("body-parser");
 const { json } = require("body-parser");
 const jsonParser = bodyParser.json();
 const dataModel = require("../models/user");
+
 router.post("/insert", jsonParser, async (req, res) => {
   try {
     const data = new dataModel({
