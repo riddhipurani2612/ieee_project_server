@@ -7,97 +7,143 @@ const bodyParser = require("body-parser");
 const { json } = require("body-parser");
 const jsonParser = bodyParser.json();
 const dataModel = require("../models/user");
-
-router.post("/insert", jsonParser, async (req, res) => {
+const { check, validationResult } = require("express-validator");
+router.post(
+  "/",
+  [
+    check("first_name", "First name is required").not().isEmpty(),
+    check("last_name", "Last name is required").not().isEmpty(),
+    check("role", "Role is required").not().isEmpty(),
+    check("address", "Address is required").not().isEmpty(),
+    check("email", "Email is required").not().isEmpty(),
+    check("email", "Not a valid email id").isEmail(),
+    check("workplace", "Workplace is required").not().isEmpty(),
+    check("designation", "Designation is required").not().isEmpty(),
+    check("password", "Password is required").not().isEmpty(),
+    check("password", "Password length should be more than 8").isLength({
+      min: 8,
+    }),
+  ],
+  async (req, res) => {
     try {
-        const data = new dataModel({
-            first_name: req.body.first_name,
-            last_name: req.body.last_name,
-            role: req.body.role,
-            address: req.body.address,
-            contact: req.body.contact,
-            email: req.body.email,
-            workplace: req.body.workplace,
-            designation: req.body.designation,
-            username: req.body.username,
-            password: req.body.password,
-            subscription: req.body.subscription,
-        });
-        await data.save();
-        res.send("User added");
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+      }
+      const user = new dataModel({
+        first_name: req.body.first_name,
+        last_name: req.body.last_name,
+        role: req.body.role,
+        address: req.body.address,
+        contact: req.body.contact,
+        email: req.body.email,
+        workplace: req.body.workplace,
+        designation: req.body.designation,
+        password: req.body.password,
+        subscription: req.body.subscription,
+      });
+      await user.save();
+      res.status(200).json(user);
     } catch (err) {
-        console.log("error : " + err);
+      res.status(404).end(user);
+      console.log("error : " + err);
     }
-});
+  }
+);
 router.get("/view", async (req, res) => {
-    try {
-        const data = await dataModel.find();
-        res.json(data);
-    } catch (err) {
-        res.send("error : " + err);
-    }
+  try {
+    const data = await dataModel.find();
+    res.json(data);
+  } catch (err) {
+    res.status(404).end("Error " + err);
+  }
 });
-router.post("/login", jsonParser, async (req, res) => {
+router.put(
+  "/",
+  [
+    check("email", "Email is required").not().isEmpty(),
+    check("password", "Password is required").not().isEmpty(),
+  ],
+  async (req, res) => {
     try {
-        console.log(req.body);
-        const user = await dataModel.findOne({ username: req.body.username });
-        if (!user) {
-            res.status(404).json({ error: "User not found" });
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+      }
+      console.log(req.body);
+      const user = await dataModel.findOne({ email: req.body.email });
+      if (!user) {
+        res.status(404).json({ errors: errors.array() });
+      } else {
+        if (user.password == req.body.password) {
+          return res.status(200).json(user);
+          console.log("valid");
         } else {
-            if (user.password == req.body.password) {
-                res.status(200).json(user);
-                console.log("valid");
-            } else {
-                res.status(401).json({ error: "Invalid Credentials" });
-                console.log("INvalid");
-            }
+          res.status(404).json({ errors: errors.array() });
+          console.log("INvalid");
         }
+      }
     } catch (err) {
-        console.log("error : " + err);
+      console.log("error : " + err);
     }
+  }
+);
+router.get("/:id", async (req, res) => {
+  try {
+    const data = await dataModel.findById(req.params.id);
+    res.json(data);
+  } catch (err) {
+    res.send(err);
+  }
 });
-router.post("/getvalues", jsonParser, async (req, res) => {
-    console.log(req.body);
-    const user = await dataModel.find({ _id: req.body._id });
-    if (!user) {
-        res.send("Data not found");
-    } else {
-        res.send(user);
-    }
-});
-router.post("/delete", jsonParser, async (req, res) => {
+router.patch(
+  "/update",
+  [
+    [
+      check("first_name", "First name is required").not().isEmpty(),
+      check("last_name", "Last name is required").not().isEmpty(),
+      check("role", "Role is required").not().isEmpty(),
+      check("address", "Address is required").not().isEmpty(),
+      check("email", "Email is required").not().isEmpty(),
+      check("email", "Not a valid email id").isEmail(),
+      check("workplace", "Workplace is required").not().isEmpty(),
+      check("designation", "Designation is required").not().isEmpty(),
+      check("password", "Password is required").not().isEmpty(),
+      check("password", "Password length should be more than 8").isLength({
+        min: 8,
+      }),
+    ],
+  ],
+  async (req, res) => {
     try {
-        const status = await dataModel.deleteOne({ _id: req.body.id });
-        res.send("deleted");
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+      }
+      const user = await dataModel.findOne({ _id: req.body._id });
+      user.first_name = req.body.first_name;
+      user.last_name = req.body.last_name;
+      user.address = req.body.address;
+      user.email = req.body.email;
+      user.contact = req.body.contact;
+      user.workplace = req.body.workplace;
+      user.designation = req.body.designation;
+      await user.save();
+      console.log(user);
+      return res.status(200).json(user);
     } catch (err) {
-        console.log(err);
+      console.log(err);
     }
-});
-router.patch("/update", jsonParser, async (req, res) => {
-    try {
-        const user = await dataModel.findOne({ _id: req.body._id });
-        user.first_name = req.body.first_name;
-        user.last_name = req.body.last_name;
-        user.address = req.body.address;
-        user.email = req.body.email;
-        user.contact = req.body.contact;
-        user.workplace = req.body.workplace;
-        user.designation = req.body.designation;
-        await user.save();
-        console.log(user);
-        res.json(user);
-    } catch (err) {
-        console.log(err);
-    }
-});
+  }
+);
 router.delete("/delete", jsonParser, async (req, res) => {
-    try {
-        console.log(req.body);
-        const uer = await dataModel.deleteOne({ _id: req.body._id });
-        console.log("Data : " + uer);
-        res.send("Deleted");
-    } catch (err) {
-        console.log(err);
-    }
+  try {
+    console.log(req.body);
+    const user = await dataModel.deleteOne({ _id: req.body._id });
+    console.log("Data : " + user);
+    return res.status(200).json(user);
+  } catch (err) {
+    console.log(err);
+  }
 });
 module.exports = router;

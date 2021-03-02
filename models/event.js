@@ -20,7 +20,7 @@ const event_schema = mongoose.Schema(
             type : String,
             required : true,
         },
-        _id : {
+        uploadedby : {
             type : mongoose.Schema.Types.ObjectId,
         }
     },

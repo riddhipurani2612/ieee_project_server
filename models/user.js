@@ -33,10 +33,6 @@ const user_schema = new mongoose.Schema(
         designation : {
             type : String,
         },
-        username : {
-            type : String,
-            required : true
-        },
         password : {
             type :String,
             required : true
