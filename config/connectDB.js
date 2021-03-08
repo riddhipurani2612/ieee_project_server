@@ -5,7 +5,7 @@ const con = config.get("mongoDBLink");
 
 const connectDB = async () => {
     try {
-        await mongoose.connect(con, {
+        await mongoose.connect("mongodb+srv://root:root@cluster0.14ouf.mongodb.net/ieee_project?retryWrites=true&w=majority", {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });

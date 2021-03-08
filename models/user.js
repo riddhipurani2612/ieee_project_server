@@ -17,7 +17,6 @@ const user_schema = new mongoose.Schema(
         },
         address : {
             type : String,
-            required : true
         },
         conatct : {
             type : String,
@@ -37,9 +36,6 @@ const user_schema = new mongoose.Schema(
             type :String,
             required : true
         },
-        subscription :{
-            type : String
-        }
     },
     {
         collection : "user",

@@ -1,31 +1,29 @@
-const {Int32} = require("bson");
+const { Int32 } = require("bson");
 const mongoose = require("mongoose");
 const event_schema = mongoose.Schema(
-    {
-        name : {
-            type : String,
-            required : true,
-        },
-        date : {
-            type : mongoose.Schema.Types.Date,
-            default : mongoose.Schema.Types.Date.now,
-        },
-        text : {
-            type : String,
-        },
-        image : {
-            type : String,
-        },
-        material_type : {
-            type : String,
-            required : true,
-        },
-        uploadedby : {
-            type : mongoose.Schema.Types.ObjectId,
-        }
+  {
+    eventname: {
+      type: String,
+      required: true,
     },
-    {
-        collection : "event"
-    }
+    date: {
+      type: mongoose.Schema.Types.Date,
+    },
+    time : {
+      type : String,
+    },
+    about: {
+      type: String,
+    },
+    image: {
+      type: String,
+    },
+    hostedby: {
+      type: String,
+    },
+  },
+  {
+    collection: "event",
+  }
 );
-module.exports = mongoose.model("event_schema",event_schema)
+module.exports = mongoose.model("event_schema", event_schema);
