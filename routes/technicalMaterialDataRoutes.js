@@ -1,11 +1,19 @@
 const express = require("express");
-const { request } = require("http");
 const router = express.Router();
 const bodyParser = require("body-parser");
 const dataModel = require("../models/technical_material");
 const { json } = require("body-parser");
 const { validationResult } = require("express-validator");
 const jsonParser = bodyParser.json();
+const multer = require("multer");
+const { v4: uuidv4 } = require('uuid');
+const DIR = "./public/";
+const storage = multer.diskStorage({
+  destination : (req, file, cb) =>{
+    const filename = file.originalname.toLowerCase().split(" ").join("-");
+    cb(null,uuidv4()+'-'+filename);
+  }
+});
 router.get("/", async (req, res) => {
   try {
     const data = await dataModel.find();

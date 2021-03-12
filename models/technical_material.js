@@ -9,8 +9,11 @@ const technical_material_schema = mongoose.Schema(
         text : {
             type : String,
         },
-        links : {
-            type : [String],
+        youtubelink : {
+            type : String,
+        },
+        files:{
+            type : Array,
         },
         material_type : {
             type : String,

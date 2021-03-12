@@ -21,9 +21,11 @@ router.post("/", jsonParser, async (req, res) => {
       eventname: req.body.eventname,
       date: req.body.date,
       text: req.body.text,
+      about:req.body.about,
       time: req.body.time,
       image: req.body.image,
       hostedby: req.body.hostedby,
+      registrationlink:req.body.registrationlink
     });
     await newData.save();
     return res.status(200).json(newData);
@@ -56,6 +58,22 @@ router.get("/upcoming", jsonParser, async (req, res) => {
     }
   } catch (err) {
     res.status(404).json({ errors: errors.array() });
+    console.log(err);
+  }
+});
+router.get("/passed",jsonParser,async(req,res)=>{
+  console.log(req.body);
+  try{
+    const event = await dataModel.find({ date: { $lt: new Date() } });
+    if(!event){
+      return res.status(404).json({errors:errors.array()});
+    }
+    else{
+      return res.status(200).json(event);
+    }
+  }
+  catch(err){
+    res.status(404).json({errors:errors.array()});
     console.log(err);
   }
 });

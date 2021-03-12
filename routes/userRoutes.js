@@ -1,14 +1,12 @@
 const express = require("express");
-const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
-const cors = require("cors");
-const { request } = require("http");
 const router = express.Router();
 const bodyParser = require("body-parser");
 const { json } = require("body-parser");
 const jsonParser = bodyParser.json();
 const dataModel = require("../models/user");
 const { check, validationResult } = require("express-validator");
+
 router.post(
   "/changepassword",
   [

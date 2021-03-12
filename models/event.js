@@ -21,6 +21,9 @@ const event_schema = mongoose.Schema(
     hostedby: {
       type: String,
     },
+    registrationlink : {
+      type : String,
+    }
   },
   {
     collection: "event",
