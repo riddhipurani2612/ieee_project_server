@@ -1,5 +1,17 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
+const multer = require("multer");
+const storage = multer.diskStorage({
+  destination: (req, rex, cb) => {
+    cb(null, "../uploads");
+  },
+  filename: (req, file, cb) => {
+    console.log(file);
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage: storage });
 const router = express.Router();
 const bodyParser = require("body-parser");
 const { json } = require("body-parser");
@@ -7,6 +19,17 @@ const jsonParser = bodyParser.json();
 const dataModel = require("../models/user");
 const { check, validationResult } = require("express-validator");
 
+router.post("/image", upload.single("image"), (req, res, next) => {
+  try {
+    console.log(req.body);
+    console.log(req.file);
+    return res.status(201).json({
+      message: "File uploded successfully",
+    });
+  } catch (error) {
+    console.error(error);
+  }
+});
 router.post(
   "/changepassword",
   [
@@ -46,11 +69,10 @@ router.post(
         await data.save();
         console.log(data);
         return res.status(200).json(data);
-    } else {
-            return res
+      } else {
+        return res
           .status(400)
           .json({ errors: [{ msg: "invalid credentials" }] });
-      
       }
     } catch (err) {
       res.status(404).json(err);

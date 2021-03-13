@@ -4,20 +4,15 @@ const technical_material_schema = mongoose.Schema(
     {
         title : {
             type : String,
-            required : true,
         },
-        text : {
+        about : {
             type : String,
         },
         youtubelink : {
             type : String,
         },
-        files:{
-            type : Array,
-        },
-        material_type : {
+        file:{
             type : String,
-            required : true,
         },
         uploadedby : {
             type : mongoose.Schema.Types.ObjectId,

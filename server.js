@@ -1,4 +1,5 @@
 const express = require("express");
+const path=require("path");
 const cors = require("cors");
 const connectDB = require("./config/connectDB");
 const app = express();
@@ -20,7 +21,7 @@ app.use("/event", eventRoute);
 app.use("/techMaterial", technicalMaterialRoute);
 app.use("/user",userRoute);
 app.use("/feedback",feedbackRoute)
-
+app.use("/image",express.static(path.join(__dirname,'/image')));
 app.get("/", (req, res) => {
   res.send("Welcome to your own first Express API!!");
 });
