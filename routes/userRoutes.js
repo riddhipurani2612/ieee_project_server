@@ -1,35 +1,15 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
-const multer = require("multer");
-const storage = multer.diskStorage({
-  destination: (req, rex, cb) => {
-    cb(null, "../uploads");
-  },
-  filename: (req, file, cb) => {
-    console.log(file);
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({ storage: storage });
 const router = express.Router();
 const bodyParser = require("body-parser");
 const { json } = require("body-parser");
 const jsonParser = bodyParser.json();
 const dataModel = require("../models/user");
 const { check, validationResult } = require("express-validator");
+const jwt = require("jsonwebtoken");
+const config = require("config");
+const auth = require("../middleware/auth");
 
-router.post("/image", upload.single("image"), (req, res, next) => {
-  try {
-    console.log(req.body);
-    console.log(req.file);
-    return res.status(201).json({
-      message: "File uploded successfully",
-    });
-  } catch (error) {
-    console.error(error);
-  }
-});
 router.post(
   "/changepassword",
   [
@@ -99,6 +79,7 @@ router.post(
       if (!errors.isEmpty()) {
         return res.status(422).json({ errors: errors.array() });
       }
+      console.log(req.body);
       const hashedPassword = await bcrypt.hash(req.body.password, 12);
       const user = new dataModel({
         first_name: req.body.first_name,
@@ -111,7 +92,9 @@ router.post(
         designation: req.body.designation,
         password: hashedPassword,
         subscription: req.body.subscription,
+        about : req.body.about,
       });
+      console.log(user);
       await user.save();
       res.status(200).json(user);
     } catch (err) {
@@ -123,6 +106,17 @@ router.post(
 router.get("/view", async (req, res) => {
   try {
     const data = await dataModel.find();
+    res.json(data);
+  } catch (err) {
+    res.status(404).end("Error " + err);
+  }
+});
+router.get("/:role", async (req, res) => {
+  try {
+    console.log("Members");
+    console.log(req.body);
+    const data = await dataModel.find({role:req.params.role});
+    console.log(data);
     res.json(data);
   } catch (err) {
     res.status(404).end("Error " + err);
@@ -148,10 +142,25 @@ router.put(
         const hashedPassword = await bcrypt.hash(req.body.password, 12);
         const isMatch = await bcrypt.compare(req.body.password, user.password);
         if (isMatch) {
-          return res.status(200).json(user);
+          const payload={
+            user : {
+              id : user._id,
+              first_name : user.first_name,
+              last_name : user.last_name,
+              role : user.role,
+            },
+          };
+          jwt.sign(
+            payload,
+            config.get("secretKey"),
+            (err,token) =>{
+              if(err) throw err;
+              return res.json({token});
+            }
+          )
         } else {
-          res.status(404).json({ errors: errors.array() });
           console.log("INvalid");
+          return res.status(404).json({ errors: errors.array() });
         }
       }
     } catch (err) {
@@ -159,9 +168,10 @@ router.put(
     }
   }
 );
-router.get("/:id", async (req, res) => {
+router.get("/",auth ,async (req, res) => {
   try {
-    const data = await dataModel.findById(req.params.id);
+    console.log(req.user.id);
+    const data = await dataModel.findById(req.user.id);
     res.json(data);
   } catch (err) {
     res.send(err);

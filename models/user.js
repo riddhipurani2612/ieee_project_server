@@ -18,7 +18,7 @@ const user_schema = new mongoose.Schema(
         address : {
             type : String,
         },
-        conatct : {
+        contact : {
             type : String,
         },
         email : {
@@ -30,6 +30,9 @@ const user_schema = new mongoose.Schema(
             required : true
         },
         designation : {
+            type : String,
+        },
+        about : {
             type : String,
         },
         password : {

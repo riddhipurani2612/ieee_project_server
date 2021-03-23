@@ -11,7 +11,7 @@ const technical_material_schema = mongoose.Schema(
         youtubelink : {
             type : String,
         },
-        file:{
+        materialfile:{
             type : String,
         },
         uploadedby : {
