@@ -111,7 +111,7 @@ router.get("/view", async (req, res) => {
     res.status(404).end("Error " + err);
   }
 });
-router.get("/:role", async (req, res) => {
+router.get("/getmembers/:role", async (req, res) => {
   try {
     console.log("Members");
     console.log(req.body);
@@ -141,6 +141,7 @@ router.put(
       } else {
         const hashedPassword = await bcrypt.hash(req.body.password, 12);
         const isMatch = await bcrypt.compare(req.body.password, user.password);
+        const roleUser=user.role;
         if (isMatch) {
           const payload={
             user : {
@@ -155,7 +156,9 @@ router.put(
             config.get("secretKey"),
             (err,token) =>{
               if(err) throw err;
-              return res.json({token});
+              console.log(token);
+              console.log(roleUser);
+              return res.json({token, roleUser});
             }
           )
         } else {
@@ -177,6 +180,18 @@ router.get("/",auth ,async (req, res) => {
     res.send(err);
   }
 });
+router.get("/getrole",auth,async(req,res) =>{
+  try{
+    console.log(req.user.id);
+    const data = await dataModel.findById(req.user.id);
+    console.log(data.role);
+    return res.status(200).json(data.role);
+  }
+  catch(err){
+    res.status(404).send({msg : "User Not Found"});
+  }
+});
+
 router.patch(
   "/:_id",
   [

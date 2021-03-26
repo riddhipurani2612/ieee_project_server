@@ -15,13 +15,13 @@ const event_schema = mongoose.Schema(
     about: {
       type: String,
     },
-    image: {
-      type: String,
-    },
     hostedby: {
       type: String,
     },
     registrationlink : {
+      type : String,
+    },
+    eventimage : {
       type : String,
     }
   },

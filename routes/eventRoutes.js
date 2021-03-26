@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const dataModel = require("../models/event");
 const { json } = require("body-parser");
 const jsonParser = bodyParser.json();
+
 router.get("/", async (req, res) => {
   try {
     const data = await dataModel.find();
@@ -14,7 +15,24 @@ router.get("/", async (req, res) => {
     res.status(404).json({ errors: errors.array() });
   }
 });
-router.post("/", jsonParser, async (req, res) => {
+router.post("/", async (req, res) => {
+  if (!req.files) return res.status(500).send({ msg: "File not Found" });
+  const myFile = req.files.file;
+  console.log(myFile);
+  console.log(__dirname);
+  try {
+    myFile.mv(`./public/${myFile.name}`, function (err) {
+      if (err) {
+        console.log(err);
+        return res.status(500).send({ msg: "Error Occured" });
+      }
+      return res
+        .status(200)
+        .send({ name: myFile.name, path: `/${myFile.name}` });
+    });
+  } catch (error) {
+    console.log(error);
+  }
   try {
     console.log(req);
     const newData = new dataModel({
@@ -23,9 +41,9 @@ router.post("/", jsonParser, async (req, res) => {
       text: req.body.text,
       about:req.body.about,
       time: req.body.time,
-      image: req.body.image,
       hostedby: req.body.hostedby,
-      registrationlink:req.body.registrationlink
+      registrationlink:req.body.registrationlink,
+      eventimage:myFile.name,
     });
     await newData.save();
     return res.status(200).json(newData);

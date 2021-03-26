@@ -41,7 +41,7 @@ router.post("/", async (req, res) => {
       summary: req.body.summary,
       purpose: req.body.purpose,
       minutes: req.body.minutes,
-      sign : myFile.name,
+      sign: myFile.name,
     });
     await newData.save();
     return res.status(200).json(newData);
