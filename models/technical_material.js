@@ -11,6 +11,12 @@ const technical_material_schema = mongoose.Schema(
         youtubelink : {
             type : String,
         },
+        publicationlink:{
+            type : String,
+        },
+        materialtype:{
+            type : String,
+        },
         materialfile:{
             type : String,
         },

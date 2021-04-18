@@ -12,6 +12,7 @@ const auth = require("../middleware/auth");
 
 router.post(
   "/changepassword",
+  auth,
   [
     check("password", "Password is required").not().isEmpty(),
     check("password", "Password length should be more than 8").isLength({
@@ -30,7 +31,7 @@ router.post(
         return res.status(422).json({ errors: errors.array() });
       }
       console.log(req.body);
-      const data = await dataModel.findById(req.body._id);
+      const data = await dataModel.findById(req.user._id);
       console.log(data.password);
       const isMatch = await bcrypt.compare(req.body.password, data.password);
       console.log(isMatch);
@@ -39,13 +40,13 @@ router.post(
         data.first_name = data.first_name;
         data.last_name = data.last_name;
         data.role = data.role;
-        data.address = data.address;
         data.email = data.email;
         data.contact = data.contact;
         data.workplace = data.workplace;
         data.designation = data.designation;
         data.password = hashedPassword;
-        data.subscription = data.subscription;
+        data.about=data.about;
+        data.profile = profile;
         await data.save();
         console.log(data);
         return res.status(200).json(data);
@@ -74,32 +75,72 @@ router.post(
     }),
   ],
   async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(422).json({ errors: errors.array() });
+    const userFound = await dataModel.findOne({ email: req.body.email });
+    if (userFound) {
+      return res.status(409).send({ msg: "User Already Exists.." });
+    }
+    if (req.files) {
+      const myFile = req.files.file;
+      console.log(myFile);
+      console.log(__dirname);
+      try {
+        myFile.mv(`./public/${myFile.name}`, function (err) {
+          if (err) {
+            console.log(err);
+            return res.status(500).send({ msg: "Error Occured" });
+          }
+          return res
+            .status(200)
+            .send({ name: myFile.name, path: `/${myFile.name}` });
+        });
+      } catch (error) {
+        console.log(error);
       }
-      console.log(req.body);
-      const hashedPassword = await bcrypt.hash(req.body.password, 12);
-      const user = new dataModel({
-        first_name: req.body.first_name,
-        last_name: req.body.last_name,
-        role: req.body.role,
-        address: req.body.address,
-        contact: req.body.contact,
-        email: req.body.email,
-        workplace: req.body.workplace,
-        designation: req.body.designation,
-        password: hashedPassword,
-        subscription: req.body.subscription,
-        about : req.body.about,
-      });
-      console.log(user);
-      await user.save();
-      res.status(200).json(user);
-    } catch (err) {
-      res.status(404).json(err);
-      console.log("error : " + err);
+      try {
+        const profileNew = "http://localhost:5000/" + myFile.name;
+        const hashedPassword = await bcrypt.hash(req.body.password, 12);
+        console.log(req.body);
+        const newData = new dataModel({
+          first_name: req.body.first_name,
+          last_name: req.body.last_name,
+          role: req.body.role,
+          contact: req.body.contact,
+          email: req.body.email,
+          workplace: req.body.workplace,
+          designation: req.body.designation,
+          password: hashedPassword,
+          profile: profileNew,
+          about: req.body.about,
+        });
+        await newData.save();
+        return res.status(200).json(newData);
+      } catch (err) {
+        console.log(err);
+        return res.status(500).end(err);
+      }
+    } else {
+      try {
+        const hashedPassword = await bcrypt.hash(req.body.password, 12);
+        console.log(req.body);
+        const newData = new dataModel({
+          first_name: req.body.first_name,
+          last_name: req.body.last_name,
+          role: req.body.role,
+          contact: req.body.contact,
+          email: req.body.email,
+          workplace: req.body.workplace,
+          designation: req.body.designation,
+          password: hashedPassword,
+          subscription: req.body.subscription,
+          about: req.body.about,
+          profile : "http://localhost:5000/default.png"
+        });
+        await newData.save();
+        return res.status(200).json(newData);
+      } catch (err) {
+        console.log(err);
+        return res.status(500).end(err);
+      }
     }
   }
 );
@@ -115,7 +156,7 @@ router.get("/getmembers/:role", async (req, res) => {
   try {
     console.log("Members");
     console.log(req.body);
-    const data = await dataModel.find({role:req.params.role});
+    const data = await dataModel.find({ role: req.params.role }).select("-_id");
     console.log(data);
     res.json(data);
   } catch (err) {
@@ -141,26 +182,22 @@ router.put(
       } else {
         const hashedPassword = await bcrypt.hash(req.body.password, 12);
         const isMatch = await bcrypt.compare(req.body.password, user.password);
-        const roleUser=user.role;
+        const roleUser = user.role;
         if (isMatch) {
-          const payload={
-            user : {
-              id : user._id,
-              first_name : user.first_name,
-              last_name : user.last_name,
-              role : user.role,
+          const payload = {
+            user: {
+              _id: user._id,
+              first_name: user.first_name,
+              last_name: user.last_name,
+              role: user.role,
             },
           };
-          jwt.sign(
-            payload,
-            config.get("secretKey"),
-            (err,token) =>{
-              if(err) throw err;
-              console.log(token);
-              console.log(roleUser);
-              return res.json({token, roleUser});
-            }
-          )
+          jwt.sign(payload, config.get("secretKey"), (err, token) => {
+            if (err) throw err;
+            console.log(token);
+            console.log(roleUser);
+            return res.json({ token, roleUser });
+          });
         } else {
           console.log("INvalid");
           return res.status(404).json({ errors: errors.array() });
@@ -171,65 +208,105 @@ router.put(
     }
   }
 );
-router.get("/",auth ,async (req, res) => {
+router.get("/", auth, async (req, res) => {
   try {
-    console.log(req.user.id);
-    const data = await dataModel.findById(req.user.id);
+    console.log(req.user._id);
+    const data = await dataModel.findById(req.user._id).select("-_id -password");
     res.json(data);
   } catch (err) {
     res.send(err);
   }
 });
-router.get("/getrole",auth,async(req,res) =>{
-  try{
-    console.log(req.user.id);
-    const data = await dataModel.findById(req.user.id);
-    console.log(data.role);
-    return res.status(200).json(data.role);
-  }
-  catch(err){
-    res.status(404).send({msg : "User Not Found"});
+router.get("/getrole", auth, async (req, res) => {
+  try {
+    console.log(req.user);
+    const data = await dataModel
+      .findById(req.user._id)
+      .select("first_name last_name role profile -_id");
+    return res.status(200).json(data);
+  } catch (err) {
+    res.status(404).send({ msg: "User Not Found" });
   }
 });
 
 router.patch(
-  "/:_id",
+  "/",
+  auth,
   [
     [
-      check("_id", "ID is required").not().isEmpty(),
       check("first_name", "First name is required").not().isEmpty(),
       check("last_name", "Last name is required").not().isEmpty(),
       check("role", "Role is required").not().isEmpty(),
-      check("address", "Address is required").not().isEmpty(),
       check("email", "Email is required").not().isEmpty(),
       check("email", "Not a valid email id").isEmail(),
       check("workplace", "Workplace is required").not().isEmpty(),
       check("designation", "Designation is required").not().isEmpty(),
-      check("password", "Password is required").not().isEmpty(),
-      check("password", "Password length should be more than 8").isLength({
-        min: 8,
-      }),
     ],
   ],
   async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(422).json({ errors: errors.array() });
+    if (req.files) {
+      try {
+        console.log("file");
+        const myFile = req.files.file;
+        console.log(myFile);
+        console.log(__dirname);
+        try {
+          myFile.mv(`./public/${myFile.name}`, function (err) {
+            if (err) {
+              console.log(err);
+              return res.status(500).send({ msg: "Error Occured" });
+            }
+            return res
+              .status(200)
+              .send({ name: myFile.name, path: `/${myFile.name}` });
+          });
+        } catch (error) {
+          console.log(error);
+        }
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+          return res.status(422).json({ errors: errors.array() });
+        }
+        const profileNew = "http://localhost:5000/"+myFile.name;
+        console.log(profileNew);
+        const updatedUser = await dataModel.findById(req.user._id );
+        updatedUser.first_name = req.body.first_name;
+        updatedUser.last_name = req.body.last_name;
+        updatedUser.email = req.body.email;
+        updatedUser.contact = req.body.contact;
+        updatedUser.workplace = req.body.workplace;
+        updatedUser.designation = req.body.designation;
+        updatedUser.about = req.body.about;
+        updatedUser.profile = profileNew;
+        await updatedUser.save();
+        console.log(updatedUser);
+        return res.status(200).json(updatedUser);
+      } catch (err) {
+        console.log(err);
       }
-      const user = await dataModel.findOne({ _id: req.params._id });
-      user.first_name = req.body.first_name;
-      user.last_name = req.body.last_name;
-      user.address = req.body.address;
-      user.email = req.body.email;
-      user.contact = req.body.contact;
-      user.workplace = req.body.workplace;
-      user.designation = req.body.designation;
-      await user.save();
-      console.log(user);
-      return res.status(200).json(user);
-    } catch (err) {
-      console.log(err);
+    } else {
+      try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+          return res.status(422).json({ errors: errors.array() });
+        }
+        console.log(req.user.id);
+        console.log(req.user);
+        const updatedUser = await dataModel.findById(req.user._id);
+        updatedUser.first_name = req.user.first_name;
+        updatedUser.last_name = req.user.last_name;
+        updatedUser.email = req.body.email;
+        updatedUser.contact = req.body.contact;
+        updatedUser.workplace = req.body.workplace;
+        updatedUser.designation = req.body.designation;
+        updatedUser.profile = req.body.profile;
+        updatedUser.about = req.body.about;
+        await updatedUser.save();
+        console.log(updatedUser);
+        return res.status(200).json(updatedUser);
+      } catch (err) {
+        console.log(err);
+      }
     }
   }
 );
