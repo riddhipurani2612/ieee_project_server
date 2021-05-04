@@ -25,7 +25,7 @@ app.post("/upload", (req, res) => {
   if (!req.files) return res.status(500).send({ msg: "File not Found" });
 
   const myFile = req.files.file;
-  console.log(myFile);
+  console.log(myFile);z
   try {
       myFile.mv(`${__dirname}/public/${myFile.name}`, function (err) {
           if (err) {

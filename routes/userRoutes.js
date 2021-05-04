@@ -45,7 +45,7 @@ router.post(
         data.workplace = data.workplace;
         data.designation = data.designation;
         data.password = hashedPassword;
-        data.about=data.about;
+        data.about = data.about;
         data.profile = profile;
         await data.save();
         console.log(data);
@@ -97,7 +97,7 @@ router.post(
         console.log(error);
       }
       try {
-        const profileNew = "http://localhost:5000/" + myFile.name;
+        const profileNew = myFile.name;
         const hashedPassword = await bcrypt.hash(req.body.password, 12);
         console.log(req.body);
         const newData = new dataModel({
@@ -133,7 +133,7 @@ router.post(
           password: hashedPassword,
           subscription: req.body.subscription,
           about: req.body.about,
-          profile : "http://localhost:5000/default.png"
+          profile: "http://localhost:5000/default.png",
         });
         await newData.save();
         return res.status(200).json(newData);
@@ -211,7 +211,9 @@ router.put(
 router.get("/", auth, async (req, res) => {
   try {
     console.log(req.user._id);
-    const data = await dataModel.findById(req.user._id).select("-_id -password");
+    const data = await dataModel
+      .findById(req.user._id)
+      .select("-_id -password");
     res.json(data);
   } catch (err) {
     res.send(err);
@@ -249,7 +251,6 @@ router.patch(
         console.log("file");
         const myFile = req.files.file;
         console.log(myFile);
-        console.log(__dirname);
         try {
           myFile.mv(`./public/${myFile.name}`, function (err) {
             if (err) {
@@ -267,17 +268,15 @@ router.patch(
         if (!errors.isEmpty()) {
           return res.status(422).json({ errors: errors.array() });
         }
-        const profileNew = "http://localhost:5000/"+myFile.name;
-        console.log(profileNew);
-        const updatedUser = await dataModel.findById(req.user._id );
-        updatedUser.first_name = req.body.first_name;
-        updatedUser.last_name = req.body.last_name;
+        const updatedUser = await dataModel.findById(req.user._id);
+        updatedUser.first_name = req.user.first_name;
+        updatedUser.last_name = req.user.last_name;
         updatedUser.email = req.body.email;
         updatedUser.contact = req.body.contact;
         updatedUser.workplace = req.body.workplace;
         updatedUser.designation = req.body.designation;
+        updatedUser.profile = myFile.name;
         updatedUser.about = req.body.about;
-        updatedUser.profile = profileNew;
         await updatedUser.save();
         console.log(updatedUser);
         return res.status(200).json(updatedUser);

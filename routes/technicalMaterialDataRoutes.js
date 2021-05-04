@@ -6,6 +6,7 @@ const { json } = require("body-parser");
 const { validationResult } = require("express-validator");
 const jsonParser = bodyParser.json();
 const auth = require("../middleware/auth");
+const { response } = require("express");
 
 router.get("/materials/:materialtype", async (req, res) => {
   try {
@@ -73,6 +74,7 @@ router.post("/", auth, async (req, res) => {
         materialtype: req.body.materialtype,
         materialfile: myFile.name,
         uploadedby: req.user.id,
+        publicationlink : req.body.publicationlink,
       });
       await newData.save();
       return res.status(200).json(newData);
@@ -89,6 +91,7 @@ router.post("/", auth, async (req, res) => {
         youtubelink: req.body.youtubelink,
         materialtype: req.body.materialtype,
         uploadedby: req.user.id,
+        publicationlink : req.body.publicationlink,
       });
       await newData.save();
       return res.status(200).json(newData);
@@ -130,21 +133,37 @@ router.patch("/:id", auth, async (req, res) => {
             .status(200)
             .send({ name: myFile.name, path: `/${myFile.name}` });
         });
-        file = "http://localhost:5000/" + myFile;
+        file = myFile.name;
+        material.title = req.body.title;
+        material.about = req.body.about;
+        material.youtubelink = req.body.youtubelink;
+        material.materialtype = req.body.materialtype;
+        material.materialfile = file;
+        material.uploadedby = req.user.id;
+        material.publicationlink = req.body.publicationlink;
+        await material.save(); 
+        response.status(200).json(material);   
       } catch (error) {
         console.log(error);
       }
     } else {
       file = req.body.materialfile;
+      try{
+        material.title = req.body.title;
+        material.about = req.body.about;
+        material.youtubelink = req.body.youtubelink;
+        material.materialtype = req.body.materialtype;
+        material.materialfile = file;
+        material.uploadedby = req.user.id;
+        material.publicationlink = req.body.publicationlink;
+        await material.save();
+        response.status(200).json(material);
+      }
+      catch(err){
+        console.log(err);
+      }
     }
 
-    material.title = req.body.title;
-    material.about = req.body.about;
-    material.youtubelink = req.body.youtubelink;
-    material.materialtype = req.body.materialtype;
-    material.materialfile = file;
-    material.uploadedby = req.user.id;
-    await material.save();
   } catch (err) {
     console.log(err);
   }
