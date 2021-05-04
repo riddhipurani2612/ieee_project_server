@@ -1,0 +1,4 @@
+{
+    "secretKey" : "ieeegrssgujaratsection",
+    "mongoDBLink" : "mongodb+srv://root:root@cluster0.14ouf.mongodb.net/ieee_project?retryWrites=true&w=majority"
+}
