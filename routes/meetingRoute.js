@@ -7,11 +7,12 @@ const { json } = require("body-parser");
 const fileUpload = require("express-fileupload");
 router.get("/", async (req, res) => {
   try {
-    const data = await dataModel.find();
+    const data = await dataModel.find().sort("date");
+    console.log(data);
     return res.status(200).json(data);
   } catch (err) {
     console.log("error found " + err);
-    res.status(404).json({ errors: errors.array() });
+    res.status(404).send("");
   }
 });
 router.get("/:id", async (req, res) => {
@@ -82,19 +83,34 @@ router.patch("/:_id", async (req, res) => {
       console.log(myFile);
       console.log(__dirname);
       try {
-        myFile.mv(`./public/${myFile.name}`, function (err) {
+        myFile.mv(`./public/${myFile.name}`,async function (err) {
           if (err) {
             console.log(err);
             return res.status(500).send({ msg: "Error Occured" });
           }
-          return res
-            .status(200)
-            .send({ name: myFile.name, path: `/${myFile.name}` });
+          else{
+            const newFileName = myFile.name;
+            const meetingObj = await dataModel.findById(req.params._id);
+            meetingObj.date = req.body.date;
+            meetingObj.place = req.body.place;
+            meetingObj.attendees = req.body.attendees;
+            meetingObj.summary = req.body.summary;
+            meetingObj.purpose = req.body.purpose;
+            meetingObj.minutes = req.body.minutes;
+            meetingObj.sign = newFileName;
+            await meetingObj.save();
+            console.log(meetingObj);
+            return res.status(200).json(meetingObj);  
+          }
         });
       } catch (error) {
         console.log(error);
       }
-      const newFileName = myFile.name.split(" ").join("_");
+    } catch (err) {
+      console.log(err);
+    }
+  } else {
+    try {
       const meetingObj = await dataModel.findById(req.params._id);
       meetingObj.date = req.body.date;
       meetingObj.place = req.body.place;
@@ -102,23 +118,7 @@ router.patch("/:_id", async (req, res) => {
       meetingObj.summary = req.body.summary;
       meetingObj.purpose = req.body.purpose;
       meetingObj.minutes = req.body.minutes;
-      meetingObj.sign =  newFileName;  
-      await meetingObj.save();
-      console.log(meetingObj);
-      return res.status(200).json(meetingObj);
-    } catch (err) {
-      console.log(err);
-    }
-  } else {
-    try {
-      const meetingObj = await dataModel.findById(req.params._id);
-      meetingObj.date = req.body.date; 
-      meetingObj.place = req.body.place;
-      meetingObj.attendees = req.body.attendees;
-      meetingObj.summary = req.body.summary;
-      meetingObj.purpose = req.body.purpose;
-      meetingObj.minutes = req.body.minutes;
-      meetingObj.sign =  newFileName;  
+      meetingObj.sign = req.body.file;
       await meetingObj.save();
       console.log(meetingObj);
       return res.status(200).json(meetingObj);

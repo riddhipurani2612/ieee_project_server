@@ -39,11 +39,11 @@ router.post("/", async (req, res) => {
       eventname: req.body.eventname,
       date: req.body.date,
       text: req.body.text,
-      about:req.body.about,
+      about: req.body.about,
       time: req.body.time,
       hostedby: req.body.hostedby,
-      registrationlink:req.body.registrationlink,
-      eventimage:myFile.name,
+      registrationlink: req.body.registrationlink,
+      eventimage: myFile.name,
     });
     await newData.save();
     return res.status(200).json(newData);
@@ -51,17 +51,29 @@ router.post("/", async (req, res) => {
     console.log(err);
   }
 });
+router.get("/get/:_id", jsonParser, async (req, res) => {
+  try {
+    console.log("get id");
+    const event = await dataModel.findById(req.params._id);
+    if (event) {
+      console.log(event);
+      return res.status(200).json(event);
+    } else {
+      return res.status(404).send("Data Not Found");
+    }
+  } catch (err) {}
+});
 router.get("/", jsonParser, async (req, res) => {
   console.log(req.body);
   try {
     const event = await dataModel.find();
     if (!event) {
-      return res.status(404).json({ errors: errors.array() });
+      res.status(404).send("Events not Found");
     } else {
       return res.status(200).json(event);
     }
   } catch (err) {
-    res.status(404).json({ errors: errors.array() });
+    res.status(404).send("Events not Found");
     console.log(err);
   }
 });
@@ -70,43 +82,89 @@ router.get("/upcoming", jsonParser, async (req, res) => {
   try {
     const event = await dataModel.find({ date: { $gte: new Date() } });
     if (!event) {
-      return res.status(404).json({ errors: errors.array() });
+      res.status(404).send("Events not Found");
+    } else {
+      console.log(event);
+      return res.status(200).json(event);
+    }
+  } catch (err) {
+    res.status(404).send("Events not Found");
+    console.log(err);
+  }
+});
+router.get("/passed", jsonParser, async (req, res) => {
+  console.log(req.body);
+  try {
+    const event = await dataModel.find({ date: { $lt: new Date() } });
+    if (!event) {
+      res.status(404).send("Events not Found");
     } else {
       return res.status(200).json(event);
     }
   } catch (err) {
-    res.status(404).json({ errors: errors.array() });
+    res.status(404).send("Events not Found");
     console.log(err);
   }
 });
-router.get("/passed",jsonParser,async(req,res)=>{
-  console.log(req.body);
-  try{
-    const event = await dataModel.find({ date: { $lt: new Date() } });
-    if(!event){
-      return res.status(404).json({errors:errors.array()});
-    }
-    else{
-      return res.status(200).json(event);
-    }
-  }
-  catch(err){
-    res.status(404).json({errors:errors.array()});
-    console.log(err);
-  }
-});
-router.patch("/", async (req, res) => {
+router.patch("/:_id", async (req, res) => {
   try {
-    const event = await dataModel.findOne({ _id: req.body._id });
-    (name = req.body.name),
-      (date = req.body.date),
-      (text = req.body.text),
-      (image = req.body.image),
-      (material_type = req.body.material_type),
-      (uploadedby = req.body._id),
-      await event.save();
+    let file;
+    console.log(req.body);
+    const event = await dataModel.findById(req.params._id);
+    if (req.files) {
+      const myFile = req.files.file;
+      console.log(myFile);
+      console.log(__dirname);
+      try {
+        myFile.mv(`./public/${myFile.name}`, async function (err) {
+          if (err) {
+            return res.status(400).send("File Uploading Error");
+          } else {
+            file = myFile.name;
+            event.eventname = req.body.eventname;
+            event.about = req.body.about;
+            event.registrationlink = req.body.registrationlink;
+            event.date = req.body.date;
+            event.eventimage = file;
+            event.hostedby = req.body.hostedby;
+            await event.save();
+            return res.status(200).json(event);
+          }
+        });
+      } catch (error) {
+        return res.status(400).send({ message: "Data not updated" });
+      }
+    } else {
+      console.log("else");
+      file = req.body.eventimage;
+      console.log(req.body);
+
+      try {
+        event.eventname = req.body.eventname;
+        event.about = req.body.about;
+        event.registrationlink = req.body.registrationlink;
+        event.date = req.body.date;
+        event.eventimage = req.body.file;
+        event.hostedby = req.body.hostedby;
+        await event.save();
+        return res.status(200).json(event);
+      } catch (err) {
+        console.log(err);
+      }
+    }
   } catch (err) {
     console.log(err);
+  }
+});
+router.delete("/:_id", async (req, res) => {
+  try {
+    console.log(`Delete : ${req.params._id}`);
+    const event = dataModel.findById(req.params._id).deleteOne().exec();
+    console.log(event);
+    res.status(200).send("Deleted");
+  } catch (err) {
+    console.log(err);
+    res.status(404).send({ msg: "Data Not found" });
   }
 });
 module.exports = router;

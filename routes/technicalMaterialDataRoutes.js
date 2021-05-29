@@ -20,14 +20,6 @@ router.get("/materials/:materialtype", async (req, res) => {
     res.status(404).json({ errors: errors.array() });
   }
 });
-router.get("/update/:id", async (req, res) => {
-  try {
-    const data = await dataModal.findById(req.params.id);
-    res.status(200).json(data);
-  } catch (err) {
-    res.status(404).json(err);
-  }
-});
 router.get("/", async (req, res) => {
   try {
     const data = await dataModel.find();
@@ -42,10 +34,10 @@ router.get("/:id", async (req, res) => {
     const data = await dataModel.findById(req.params.id);
     return res.status(200).json(data);
   } catch (err) {
+    console.log("error found " + err);
     res.status(404).json({ errors: errors.array() });
   }
 });
-
 router.post("/", auth, async (req, res) => {
   console.log(req);
   if (req.files) {
@@ -124,25 +116,24 @@ router.patch("/:id", auth, async (req, res) => {
       console.log(myFile);
       console.log(__dirname);
       try {
-        myFile.mv(`./public/${myFile.name}`, function (err) {
+        myFile.mv(`./public/${myFile.name}`, async function (err) {
           if (err) {
             console.log(err);
             return res.status(500).send({ msg: "Error Occured" });
           }
-          return res
-            .status(200)
-            .send({ name: myFile.name, path: `/${myFile.name}` });
+          else{
+            file = myFile.name;
+            material.title = req.body.title;
+            material.about = req.body.about;
+            material.youtubelink = req.body.youtubelink;
+            material.materialtype = req.body.materialtype;
+            material.materialfile = file;
+            material.uploadedby = req.user.id;
+            material.publicationlink = req.body.publicationlink;
+            await material.save(); 
+            return res.status(200).json(material);   
+          }
         });
-        file = myFile.name;
-        material.title = req.body.title;
-        material.about = req.body.about;
-        material.youtubelink = req.body.youtubelink;
-        material.materialtype = req.body.materialtype;
-        material.materialfile = file;
-        material.uploadedby = req.user.id;
-        material.publicationlink = req.body.publicationlink;
-        await material.save(); 
-        response.status(200).json(material);   
       } catch (error) {
         console.log(error);
       }
@@ -157,7 +148,7 @@ router.patch("/:id", auth, async (req, res) => {
         material.uploadedby = req.user.id;
         material.publicationlink = req.body.publicationlink;
         await material.save();
-        response.status(200).json(material);
+        return res.status(200).json(material);
       }
       catch(err){
         console.log(err);
