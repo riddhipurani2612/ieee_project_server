@@ -32,6 +32,9 @@ router.post(
       }
       console.log(req.body);
       const data = await dataModel.findById(req.user._id);
+      if (!data) {
+        return res.status(422).json({ msg: "User not found" });
+      }
       console.log(data.password);
       const isMatch = await bcrypt.compare(req.body.password, data.password);
       console.log(isMatch);
@@ -51,9 +54,7 @@ router.post(
         console.log(data);
         return res.status(200).json(data);
       } else {
-        return res
-          .status(400)
-          .json({ errors: [{ msg: "invalid credentials" }] });
+        return res.status(422).json({ msg: "invalid credentials" });
       }
     } catch (err) {
       res.status(404).json(err);
@@ -77,7 +78,9 @@ router.post(
   async (req, res) => {
     const userFound = await dataModel.findOne({ email: req.body.email });
     if (userFound) {
-      return res.status(409).send({ msg: "User Already Exists.." });
+      return res
+        .status(409)
+        .json({ msg: "User Already Exists! Use other Email Id to sign up!" });
     }
     if (req.files) {
       const myFile = req.files.file;
@@ -86,37 +89,31 @@ router.post(
       try {
         myFile.mv(`./public/${myFile.name}`, function (err) {
           if (err) {
-            console.log(err);
-            return res.status(500).send({ msg: "Error Occured" });
+            return res
+              .status(500)
+              .json({ msg: "Error Occured while uploading file" });
+          } else {
+            const profileNew = myFile.name;
+            const hashedPassword = await bcrypt.hash(req.body.password, 12);
+            console.log(req.body);
+            const newData = new dataModel({
+              first_name: req.body.first_name,
+              last_name: req.body.last_name,
+              role: req.body.role,
+              contact: req.body.contact,
+              email: req.body.email,
+              workplace: req.body.workplace,
+              designation: req.body.designation,
+              password: hashedPassword,
+              profile: profileNew,
+              about: req.body.about,
+            });
+            await newData.save();
+            return res.status(200).json(newData);
           }
-          return res
-            .status(200)
-            .send({ name: myFile.name, path: `/${myFile.name}` });
         });
       } catch (error) {
         console.log(error);
-      }
-      try {
-        const profileNew = myFile.name;
-        const hashedPassword = await bcrypt.hash(req.body.password, 12);
-        console.log(req.body);
-        const newData = new dataModel({
-          first_name: req.body.first_name,
-          last_name: req.body.last_name,
-          role: req.body.role,
-          contact: req.body.contact,
-          email: req.body.email,
-          workplace: req.body.workplace,
-          designation: req.body.designation,
-          password: hashedPassword,
-          profile: profileNew,
-          about: req.body.about,
-        });
-        await newData.save();
-        return res.status(200).json(newData);
-      } catch (err) {
-        console.log(err);
-        return res.status(500).end(err);
       }
     } else {
       try {
@@ -133,13 +130,14 @@ router.post(
           password: hashedPassword,
           subscription: req.body.subscription,
           about: req.body.about,
-          profile: "http://localhost:5000/default.png",
         });
         await newData.save();
         return res.status(200).json(newData);
       } catch (err) {
         console.log(err);
-        return res.status(500).end(err);
+        return res
+          .status(500)
+          .json({ msg: "Error!! Please try again later!!" });
       }
     }
   }
@@ -149,7 +147,7 @@ router.get("/view", async (req, res) => {
     const data = await dataModel.find();
     res.json(data);
   } catch (err) {
-    res.status(404).end("Error " + err);
+    res.status(404).json({ msg: "No data found" });
   }
 });
 router.get("/getmembers/:role", async (req, res) => {
@@ -160,7 +158,7 @@ router.get("/getmembers/:role", async (req, res) => {
     console.log(data);
     res.json(data);
   } catch (err) {
-    res.status(404).end("Error " + err);
+    res.status(404).json({ msg: "No data found" });
   }
 });
 router.put(
@@ -178,7 +176,9 @@ router.put(
       console.log(req.body);
       const user = await dataModel.findOne({ email: req.body.email });
       if (!user) {
-        return res.status(404).json({msg : "Please Sign Up first! User not found"});
+        return res
+          .status(404)
+          .json({ msg: "Please Sign Up first! User not found" });
       } else {
         const hashedPassword = await bcrypt.hash(req.body.password, 12);
         const isMatch = await bcrypt.compare(req.body.password, user.password);
@@ -200,7 +200,7 @@ router.put(
           });
         } else {
           console.log("INvalid");
-          return res.status(404).json({msg : "Invalid Credentials"});
+          return res.status(422).json({ msg: "Invalid Credentials" });
         }
       }
     } catch (err) {
@@ -216,16 +216,16 @@ router.get("/", auth, async (req, res) => {
       .select("-_id -password");
     res.json(data);
   } catch (err) {
-    res.send(err);
+    res.status(404).json({ msg: "No data found" });
   }
 });
 router.get("/get/:email", async (req, res) => {
   console.log("update");
   try {
-    const data = await dataModel.findOne({email : req.params.email});
+    const data = await dataModel.findOne({ email: req.params.email });
     res.json(data);
   } catch (err) {
-    res.send(err);
+    res.status(404).json({ msg: "No data found" });
   }
 });
 
@@ -243,6 +243,10 @@ router.patch(
     ],
   ],
   async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
     if (req.files) {
       try {
         console.log("file");
@@ -252,41 +256,35 @@ router.patch(
           myFile.mv(`./public/${myFile.name}`, function (err) {
             if (err) {
               console.log(err);
-              return res.status(500).send({ msg: "Error Occured" });
+              return res.status(500).json({ msg: "Error Occured" });
+            } else {
+              const updatedUser = await dataModel.findOne({
+                email: req.params.email,
+              });
+              updatedUser.first_name = req.body.first_name;
+              updatedUser.last_name = req.body.last_name;
+              updatedUser.email = req.body.email;
+              updatedUser.contact = req.body.contact;
+              updatedUser.workplace = req.body.workplace;
+              updatedUser.designation = req.body.designation;
+              updatedUser.profile = myFile.name;
+              updatedUser.about = req.body.about;
+              await updatedUser.save();
+              console.log(updatedUser);
+              return res.status(200).json(updatedUser);
             }
-            return res
-              .status(200)
-              .send({ name: myFile.name, path: `/${myFile.name}` });
           });
         } catch (error) {
           console.log(error);
         }
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-          return res.status(422).json({ errors: errors.array() });
-        }
-        const updatedUser = await dataModel.findOne({email : req.params.email});
-        updatedUser.first_name = req.body.first_name;
-        updatedUser.last_name = req.body.last_name;
-        updatedUser.email = req.body.email;
-        updatedUser.contact = req.body.contact;
-        updatedUser.workplace = req.body.workplace;
-        updatedUser.designation = req.body.designation;
-        updatedUser.profile = myFile.name;
-        updatedUser.about = req.body.about;
-        await updatedUser.save();
-        console.log(updatedUser);
-        return res.status(200).json(updatedUser);
       } catch (err) {
         console.log(err);
       }
     } else {
       try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-          return res.status(422).json({ errors: errors.array() });
-        }
-        const updatedUser = await dataModel.findOne({email : req.params.email});
+        const updatedUser = await dataModel.findOne({
+          email: req.params.email,
+        });
         updatedUser.first_name = req.body.first_name;
         updatedUser.last_name = req.body.last_name;
         updatedUser.email = req.body.email;
@@ -299,7 +297,7 @@ router.patch(
         console.log(updatedUser);
         return res.status(200).json(updatedUser);
       } catch (err) {
-        console.log(err);
+        res.status(404).json({ msg: "Error while updating data!" });
       }
     }
   }
@@ -312,7 +310,7 @@ router.get("/getrole", auth, async (req, res) => {
       .select("first_name last_name role profile -_id");
     return res.status(200).json(data);
   } catch (err) {
-    res.status(404).send({ msg: "User Not Found" });
+    res.status(404).json({ msg: "User Not Found" });
   }
 });
 
@@ -340,11 +338,11 @@ router.patch(
           myFile.mv(`./public/${myFile.name}`, function (err) {
             if (err) {
               console.log(err);
-              return res.status(500).send({ msg: "Error Occured" });
+              return res.status(500).json({ msg: "Error Occured" });
             }
             return res
               .status(200)
-              .send({ name: myFile.name, path: `/${myFile.name}` });
+              .json({ name: myFile.name, path: `/${myFile.name}` });
           });
         } catch (error) {
           console.log(error);
@@ -366,7 +364,7 @@ router.patch(
         console.log(updatedUser);
         return res.status(200).json(updatedUser);
       } catch (err) {
-        console.log(err);
+        res.status(404).json({ msg: "User Not Found" });
       }
     } else {
       try {
@@ -389,98 +387,21 @@ router.patch(
         console.log(updatedUser);
         return res.status(200).json(updatedUser);
       } catch (err) {
-        console.log(err);
+        res.status(404).json({ msg: "User Not Found" });
       }
     }
   }
 );
 
-router.patch(
-  "/:id",
-  [
-    [
-      check("first_name", "First name is required").not().isEmpty(),
-      check("last_name", "Last name is required").not().isEmpty(),
-      check("role", "Role is required").not().isEmpty(),
-      check("email", "Email is required").not().isEmpty(),
-      check("email", "Not a valid email id").isEmail(),
-      check("workplace", "Workplace is required").not().isEmpty(),
-      check("designation", "Designation is required").not().isEmpty(),
-    ],
-  ],
-  async (req, res) => {
-    if (req.files) {
-      try {
-        console.log("file");
-        const myFile = req.files.file;
-        console.log(myFile);
-        try {
-          myFile.mv(`./public/${myFile.name}`, function (err) {
-            if (err) {
-              console.log(err);
-              return res.status(500).send({ msg: "Error Occured" });
-            }
-            return res
-              .status(200)
-              .send({ name: myFile.name, path: `/${myFile.name}` });
-          });
-        } catch (error) {
-          console.log(error);
-        }
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-          return res.status(422).json({ errors: errors.array() });
-        }
-        const updatedUser = await dataModel.findById(req.params._id);
-        updatedUser.first_name = req.body.first_name;
-        updatedUser.last_name = req.body.last_name;
-        updatedUser.email = req.body.email;
-        updatedUser.contact = req.body.contact;
-        updatedUser.workplace = req.body.workplace;
-        updatedUser.designation = req.body.designation;
-        updatedUser.profile = myFile.name;
-        updatedUser.about = req.body.about;
-        await updatedUser.save();
-        console.log(updatedUser);
-        return res.status(200).json(updatedUser);
-      } catch (err) {
-        console.log(err);
-      }
-    } else {
-      try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-          return res.status(422).json({ errors: errors.array() });
-        }
-        console.log(req.user.id);
-        console.log(req.user);
-        const updatedUser = await dataModel.findById(req.params._id);
-        updatedUser.first_name = req.body.first_name;
-        updatedUser.last_name = req.body.last_name;
-        updatedUser.email = req.body.email;
-        updatedUser.contact = req.body.contact;
-        updatedUser.workplace = req.body.workplace;
-        updatedUser.designation = req.body.designation;
-        updatedUser.profile = req.body.profile;
-        updatedUser.about = req.body.about;
-        await updatedUser.save();
-        console.log(updatedUser);
-        return res.status(200).json(updatedUser);
-      } catch (err) {
-        console.log(err);
-      }
-    }
-  }
-);
 router.delete("/:email", jsonParser, async (req, res) => {
   try {
     console.log(`Delete : ${req.params.email}`);
     const user = dataModel.find({ email: req.params.email }).deleteOne().exec();
     console.log(user);
-    res.status(200).send("Deleted");
+    res.status(200).json("Deleted");
   } catch (err) {
     console.log(err);
-    res.status(404).send({ msg: "Data Not found" });
+    res.status(404).json({ msg: "Data Not found" });
   }
 });
 module.exports = router;
