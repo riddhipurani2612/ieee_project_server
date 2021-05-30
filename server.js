@@ -15,7 +15,10 @@ const urlEncodedParser = bodyParser.urlencoded({ extended: true });
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 connectDB();
-
+app.use((req,res,next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  next();
+})
 app.use(cors());
 app.use(express.static("public"));
 app.use(fileUpload());
