@@ -76,8 +76,10 @@ router.post(
     }),
   ],
   async (req, res) => {
+    res.header('Access-Control-Allow-Origin', '*');
     const userFound = await dataModel.findOne({ email: req.body.email });
     if (userFound) {
+      console.log("User exists")
       return res
         .status(409)
         .json({ msg: "User Already Exists! Use other Email Id to sign up!" });
@@ -87,7 +89,7 @@ router.post(
       console.log(myFile);
       console.log(__dirname);
       try {
-        myFile.mv(`./public/${myFile.name}`, function (err) {
+        myFile.mv(`./public/${myFile.name}`, async function (err) {
           if (err) {
             return res
               .status(500)
@@ -253,7 +255,7 @@ router.patch(
         const myFile = req.files.file;
         console.log(myFile);
         try {
-          myFile.mv(`./public/${myFile.name}`, function (err) {
+          myFile.mv(`./public/${myFile.name}`, async function (err) {
             if (err) {
               console.log(err);
               return res.status(500).json({ msg: "Error Occured" });
@@ -335,7 +337,7 @@ router.patch(
         const myFile = req.files.file;
         console.log(myFile);
         try {
-          myFile.mv(`./public/${myFile.name}`, function (err) {
+          myFile.mv(`./public/${myFile.name}`, async function (err) {
             if (err) {
               console.log(err);
               return res.status(500).json({ msg: "Error Occured" });
