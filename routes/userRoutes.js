@@ -178,7 +178,7 @@ router.put(
       console.log(req.body);
       const user = await dataModel.findOne({ email: req.body.email });
       if (!user) {
-        res.status(404).json({ errors: errors.array() });
+        return res.status(404).json({msg : "Please Sign Up first! User not found"});
       } else {
         const hashedPassword = await bcrypt.hash(req.body.password, 12);
         const isMatch = await bcrypt.compare(req.body.password, user.password);
@@ -200,7 +200,7 @@ router.put(
           });
         } else {
           console.log("INvalid");
-          return res.status(404).json({ errors: errors.array() });
+          return res.status(404).json({msg : "Invalid Credentials"});
         }
       }
     } catch (err) {
