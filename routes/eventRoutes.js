@@ -78,13 +78,11 @@ router.get("/", jsonParser, async (req, res) => {
   }
 });
 router.get("/upcoming", jsonParser, async (req, res) => {
-  console.log(req.body);
   try {
     const event = await dataModel.find({ date: { $gte: new Date() } });
     if (!event) {
       res.status(404).send("Events not Found");
     } else {
-      console.log(event);
       return res.status(200).json(event);
     }
   } catch (err) {
@@ -95,7 +93,19 @@ router.get("/upcoming", jsonParser, async (req, res) => {
 router.get("/passed", jsonParser, async (req, res) => {
   console.log(req.body);
   try {
-    const event = await dataModel.find({ date: { $lt: new Date() } });
+    var d = new Date(),
+      hour = d.getHours(),
+      min = d.getMinutes(),
+      month = d.getMonth(),
+      year = d.getFullYear(),
+      sec = d.getSeconds(),
+      day = d.getDate();
+    const event = await dataModel.find({
+      date: {
+        $lt: new Date(),
+        $gte: new Date(year - 1 + "-" + month + "-" + day),
+      },
+    });
     if (!event) {
       res.status(404).send("Events not Found");
     } else {

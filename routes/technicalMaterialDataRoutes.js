@@ -13,7 +13,7 @@ router.get("/materials/:materialtype", async (req, res) => {
     console.log(req.body);
     const data = await dataModel.find({
       materialtype: req.params.materialtype,
-    });
+    }).sort("title");
     return res.status(200).json(data);
   } catch (err) {
     console.log("error found " + err);
@@ -45,32 +45,31 @@ router.post("/", auth, async (req, res) => {
     console.log(myFile);
     console.log(__dirname);
     try {
-      myFile.mv(`./public/${myFile.name}`, function (err) {
+      myFile.mv(`./public/${myFile.name}`, async function (err) {
         if (err) {
           console.log(err);
           return res.status(500).send({ msg: "Error Occured" });
         }
-        return res
-          .status(200)
-          .send({ name: myFile.name, path: `/${myFile.name}` });
+        else{
+          console.log(req.body);
+          const newData = new dataModel({
+            title: req.body.title,
+            about: req.body.about,
+            youtubelink: req.body.youtubelink,
+            materialtype: req.body.materialtype,
+            materialfile: myFile.name,
+            uploadedby: req.user.id,
+            publicationlink : req.body.publicationlink,
+          });
+          await newData.save();
+          return res.status(200).json(newData);
+        }
       });
     } catch (error) {
       console.log(error);
     }
     try {
-      console.log(req.body);
-      const newData = new dataModel({
-        title: req.body.title,
-        about: req.body.about,
-        youtubelink: req.body.youtubelink,
-        materialtype: req.body.materialtype,
-        materialfile: myFile.name,
-        uploadedby: req.user.id,
-        publicationlink : req.body.publicationlink,
-      });
-      await newData.save();
-      return res.status(200).json(newData);
-    } catch (err) {
+     } catch (err) {
       console.log(err);
       return res.status(500).end(err);
     }

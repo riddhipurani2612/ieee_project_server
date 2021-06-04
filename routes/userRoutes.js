@@ -9,7 +9,7 @@ const { check, validationResult } = require("express-validator");
 const jwt = require("jsonwebtoken");
 const config = require("config");
 const auth = require("../middleware/auth");
-
+const { update } = require("../models/user");
 router.post(
   "/changepassword",
   auth,
@@ -21,8 +21,7 @@ router.post(
     check("newpassword", "Password is required").not().isEmpty(),
     check("newpassword", "Password length should be more than 8").isLength({
       min: 8,
-    }),
-    check("_id", "Id is required").not().isEmpty(),
+    })
   ],
   async (req, res) => {
     try {
@@ -44,12 +43,15 @@ router.post(
         data.last_name = data.last_name;
         data.role = data.role;
         data.email = data.email;
+        data.emails = data.emails;
+        data.memberid = data.memberid;
         data.contact = data.contact;
         data.workplace = data.workplace;
         data.designation = data.designation;
         data.password = hashedPassword;
         data.about = data.about;
-        data.profile = profile;
+        data.profile = data.profile;
+        console.log(data)
         await data.save();
         console.log(data);
         return res.status(200).json(data);
@@ -57,7 +59,8 @@ router.post(
         return res.status(422).json({ msg: "invalid credentials" });
       }
     } catch (err) {
-      res.status(404).json(err);
+      console.log(err);
+      res.status(404).json({msg : "Error"});
     }
   }
 );
@@ -69,7 +72,6 @@ router.post(
     check("role", "Role is required").not().isEmpty(),
     check("email", "Email is required").not().isEmpty(),
     check("email", "Not a valid email id").isEmail(),
-    check("workplace", "Workplace is required").not().isEmpty(),
     check("password", "Password is required").not().isEmpty(),
     check("password", "Password length should be more than 8").isLength({
       min: 8,
@@ -103,7 +105,9 @@ router.post(
               last_name: req.body.last_name,
               role: req.body.role,
               contact: req.body.contact,
+              memberid : req.body.memberid,
               email: req.body.email,
+              emails: req.body.emails,
               workplace: req.body.workplace,
               designation: req.body.designation,
               password: hashedPassword,
@@ -126,7 +130,9 @@ router.post(
           last_name: req.body.last_name,
           role: req.body.role,
           contact: req.body.contact,
+          memberid: req.body.memberid,
           email: req.body.email,
+          emails: req.body.emails,
           workplace: req.body.workplace,
           designation: req.body.designation,
           password: hashedPassword,
@@ -163,6 +169,17 @@ router.get("/getmembers/:role", async (req, res) => {
     res.status(404).json({ msg: "No data found" });
   }
 });
+router.get("/founder", async (req, res) => {
+  try {
+    console.log("Members");
+    console.log(req.body);
+    const data = await dataModel.find({founder : "true"}).select("-_id");
+    console.log(data);
+    res.json(data);
+  } catch (err) {
+    res.status(404).json({ msg: "No data found" });
+  }
+});
 router.put(
   "/",
   [
@@ -192,7 +209,7 @@ router.put(
               first_name: user.first_name,
               last_name: user.last_name,
               role: user.role,
-            },
+            }, 
           };
           jwt.sign(payload, config.get("secretKey"), (err, token) => {
             if (err) throw err;
@@ -266,6 +283,8 @@ router.patch(
               updatedUser.first_name = req.body.first_name;
               updatedUser.last_name = req.body.last_name;
               updatedUser.email = req.body.email;
+              updatedUser.memberid = req.body.memberid;
+              updatedUser.emails = req.body.emails;
               updatedUser.contact = req.body.contact;
               updatedUser.workplace = req.body.workplace;
               updatedUser.designation = req.body.designation;
@@ -290,6 +309,8 @@ router.patch(
         updatedUser.first_name = req.body.first_name;
         updatedUser.last_name = req.body.last_name;
         updatedUser.email = req.body.email;
+        updatedUser.emails = req.body.emails;
+        updatedUser.memberid = req.body.memberid;
         updatedUser.contact = req.body.contact;
         updatedUser.workplace = req.body.workplace;
         updatedUser.designation = req.body.designation;
@@ -357,7 +378,9 @@ router.patch(
         updatedUser.first_name = req.user.first_name;
         updatedUser.last_name = req.user.last_name;
         updatedUser.email = req.body.email;
+        updatedUser.emails = req.body.emails;
         updatedUser.contact = req.body.contact;
+        updatedUser.memberid = req.body.memberid;
         updatedUser.workplace = req.body.workplace;
         updatedUser.designation = req.body.designation;
         updatedUser.profile = myFile.name;
@@ -380,7 +403,9 @@ router.patch(
         updatedUser.first_name = req.user.first_name;
         updatedUser.last_name = req.user.last_name;
         updatedUser.email = req.body.email;
+        updatedUser.emails = req.body.emails;
         updatedUser.contact = req.body.contact;
+        updatedUser.memberid = req.body.memberid;
         updatedUser.workplace = req.body.workplace;
         updatedUser.designation = req.body.designation;
         updatedUser.profile = req.body.profile;
