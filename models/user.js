@@ -5,11 +5,9 @@ const user_schema = new mongoose.Schema(
   {
     first_name: {
       type: String,
-      required: true,
     },
     last_name: {
       type: String,
-      required: true,
     },
     role: {
       type: String,
@@ -19,7 +17,6 @@ const user_schema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: true,
     },
     workplace: {
       type: String,
@@ -35,11 +32,13 @@ const user_schema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
     },
     profile: {
       type: String,
     },
+    founder : {
+      type : String,
+    }
   },
   {
     collection: "user",
