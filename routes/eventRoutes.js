@@ -24,7 +24,7 @@ router.post("/", async (req, res) => {
   const myFile = req.files.file;
   if (req.files) {
     try {
-      myFile.mv(`./public/${myFile.name}`, function (err) {
+      myFile.mv(`./public/${myFile.name}`,async function (err) {
         if (err) {
           console.log(err);
           return res.status(500).send({ msg: "Error Occured" });
