@@ -16,39 +16,54 @@ router.get("/", async (req, res) => {
   }
 });
 router.post("/", async (req, res) => {
-  if (!req.files) return res.status(500).send({ msg: "File not Found" });
   const myFile = req.files.file;
-  console.log(myFile);
-  console.log(__dirname);
-  try {
-    myFile.mv(`./public/${myFile.name}`, function (err) {
-      if (err) {
-        console.log(err);
-        return res.status(500).send({ msg: "Error Occured" });
-      }
-      return res
-        .status(200)
-        .send({ name: myFile.name, path: `/${myFile.name}` });
-    });
-  } catch (error) {
-    console.log(error);
-  }
-  try {
-    console.log(req);
-    const newData = new dataModel({
-      eventname: req.body.eventname,
-      date: req.body.date,
-      text: req.body.text,
-      about: req.body.about,
-      time: req.body.time,
-      hostedby: req.body.hostedby,
-      registrationlink: req.body.registrationlink,
-      eventimage: myFile.name,
-    });
-    await newData.save();
-    return res.status(200).json(newData);
-  } catch (err) {
-    console.log(err);
+  if (req.files) {
+    try {
+      myFile.mv(`./public/${myFile.name}`, function (err) {
+        if (err) {
+          console.log(err);
+          return res.status(500).send({ msg: "Error Occured" });
+        }
+        try {
+          console.log(req);
+          const newData = new dataModel({
+            eventname: req.body.eventname,
+            date: req.body.date,
+            text: req.body.text,
+            about: req.body.about,
+            time: req.body.time,
+            hostedby: req.body.hostedby,
+            attendees: req.body.attendees,
+            registrationlink: req.body.registrationlink,
+            eventimage: myFile.name,
+          });
+          await newData.save();
+          return res.status(200).json(newData);
+        } catch (err) {
+          console.log(err);
+        }
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  } else {
+    try {
+      console.log(req);
+      const newData = new dataModel({
+        eventname: req.body.eventname,
+        date: req.body.date,
+        text: req.body.text,
+        about: req.body.about,
+        time: req.body.time,
+        hostedby: req.body.hostedby,
+        attendees: req.body.attendees,
+        registrationlink: req.body.registrationlink,
+      });
+      await newData.save();
+      return res.status(200).json(newData);
+    } catch (err) {
+      console.log(err);
+    }
   }
 });
 router.get("/get/:_id", jsonParser, async (req, res) => {
@@ -136,6 +151,7 @@ router.patch("/:_id", async (req, res) => {
             event.registrationlink = req.body.registrationlink;
             event.date = req.body.date;
             event.eventimage = file;
+            event.attendees = req.body.attendees;
             event.hostedby = req.body.hostedby;
             await event.save();
             return res.status(200).json(event);
@@ -154,6 +170,7 @@ router.patch("/:_id", async (req, res) => {
         event.about = req.body.about;
         event.registrationlink = req.body.registrationlink;
         event.date = req.body.date;
+        event.attendees = req.body.attendees;
         event.eventimage = req.body.file;
         event.hostedby = req.body.hostedby;
         await event.save();

@@ -23,6 +23,9 @@ const event_schema = mongoose.Schema(
     },
     eventimage : {
       type : String,
+    },
+    attendees : {
+      type : String,
     }
   },
   {
