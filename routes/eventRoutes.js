@@ -5,7 +5,10 @@ const bodyParser = require("body-parser");
 const dataModel = require("../models/event");
 const { json } = require("body-parser");
 const jsonParser = bodyParser.json();
-
+router.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  next();
+});
 router.get("/", async (req, res) => {
   try {
     const data = await dataModel.find();
