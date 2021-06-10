@@ -10,8 +10,6 @@ const jwt = require("jsonwebtoken");
 const config = require("config");
 const auth = require("../middleware/auth");
 const { update } = require("../models/user");
-const corsMiddelware = require("../cors");
-router.use(corsMiddelware);
 router.post(
   "/changepassword",
   auth,
