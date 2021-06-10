@@ -16,6 +16,8 @@ router.get("/", async (req, res) => {
   }
 });
 router.post("/", async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
+
   const myFile = req.files.file;
   if (req.files) {
     try {
