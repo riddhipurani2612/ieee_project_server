@@ -10,6 +10,7 @@ const jwt = require("jsonwebtoken");
 const config = require("config");
 const auth = require("../middleware/auth");
 const { update } = require("../models/user");
+
 router.post(
   "/changepassword",
   auth,
@@ -231,6 +232,7 @@ router.put(
         return res
           .status(404)
           .json({ msg: "Please Sign Up first! User not found" });
+      } else {
         const hashedPassword = await bcrypt.hash(req.body.password, 12);
         const isMatch = await bcrypt.compare(req.body.password, user.password);
         const roleUser = user.role;
@@ -441,12 +443,20 @@ router.patch(
 router.delete("/:email", jsonParser, async (req, res) => {
   try {
     console.log(`Delete : ${req.params.email}`);
-    const user = dataModel.find({ email: req.params.email }).deleteOne().exec();
-    console.log(user);
-    res.status(200).json("Deleted");
+    const user = await dataModel
+      .find({ email: req.params.email })
+      .deleteOne()
+      .exec();
+    console.log(user.deletedCount);
+    if (user.deletedCount > 0) {
+      console.log("aa");
+      return res.status(200).json({ msg: "Deleted" });
+    } if(user.deletedCount <= 0) {
+      return res.status(404).json({ msg: "Data not found" });
+    }
   } catch (err) {
     console.log(err);
-    res.status(404).json({ msg: "Data Not found" });
+    return res.status(404).json({ msg: "Data Not found" });
   }
 });
 module.exports = router;

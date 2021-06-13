@@ -190,8 +190,9 @@ router.patch("/:_id", async (req, res) => {
 });
 router.delete("/:_id", async (req, res) => {
   try {
+    console.log(req.params)
     console.log(`Delete : ${req.params._id}`);
-    const event = dataModel.findById(req.params._id).deleteOne().exec();
+    const event = await dataModel.findById(req.params._id).deleteOne().exec();
     console.log(event);
     res.status(200).send("Deleted");
   } catch (err) {

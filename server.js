@@ -27,12 +27,12 @@ app.use(cors());
 app.use(express.static("public"));
 app.use(fileUpload());
 
-app.get("/", async (req, res) => {
+app.get("/counter", async (req, res) => {
   const temp = await dataModel.find();
   console.log(`get ${temp}`);
   return res.status(200).json(temp);
 });
-app.post("/", async (req, res) => {
+app.post("/counter", async (req, res) => {
   try {
     const temp = await dataModel.find();
     console.log(temp);
