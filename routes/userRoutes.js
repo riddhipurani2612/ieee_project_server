@@ -10,6 +10,7 @@ const jwt = require("jsonwebtoken");
 const config = require("config");
 const auth = require("../middleware/auth");
 const { update } = require("../models/user");
+const counterModel = require("../models/counter");
 
 router.post(
   "/changepassword",
@@ -451,7 +452,8 @@ router.delete("/:email", jsonParser, async (req, res) => {
     if (user.deletedCount > 0) {
       console.log("aa");
       return res.status(200).json({ msg: "Deleted" });
-    } if(user.deletedCount <= 0) {
+    }
+    if (user.deletedCount <= 0) {
       return res.status(404).json({ msg: "Data not found" });
     }
   } catch (err) {

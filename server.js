@@ -9,6 +9,7 @@ const technicalMaterialRoute = require("./routes/technicalMaterialDataRoutes");
 const userRoute = require("./routes/userRoutes");
 const feedbackRoute = require("./routes/feedbackRoute");
 const meetingRoute = require("./routes/meetingRoute");
+const counterRoute = require("./routes/counterRoutea");
 const port = process.env.PORT || 5000;
 const dataModel = require("./models/counter");
 
@@ -26,25 +27,6 @@ app.use((req, res, next) => {
 app.use(cors());
 app.use(express.static("public"));
 app.use(fileUpload());
-
-app.get("/counter", async (req, res) => {
-  const temp = await dataModel.find();
-  console.log(`get ${temp}`);
-  return res.status(200).json(temp);
-});
-app.post("/counter", async (req, res) => {
-  try {
-    const temp = await dataModel.find();
-    console.log(temp);
-    console.log(temp[0].count);
-    const a = parseInt(temp[0].count) + 1;
-    console.log(a)
-    temp[0].count = a;
-    await temp[0].save();
-  } catch (err) {
-    console.log(err);
-  }
-});
 
 app.post("/upload", (req, res) => {
   if (!req.files) return res.status(500).send({ msg: "File not Found" });
@@ -80,3 +62,4 @@ app.use("/techMaterial", technicalMaterialRoute);
 app.use("/user", userRoute);
 app.use("/feedback", feedbackRoute);
 app.use("/meeting", meetingRoute);
+app.use("/counter",counterRoute);
