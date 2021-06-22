@@ -1,7 +1,6 @@
 {
   "name": "ieee_project_express",
   "version": "1.0.0",
-  "description": "",
   "main": "server.js",
   "dependencies": {
     "bcrypt": "^5.0.1",
@@ -29,5 +28,14 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/riddhipurani2612/ieee_project_server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/riddhipurani2612/ieee_project_server/issues"
+  },
+  "homepage": "https://github.com/riddhipurani2612/ieee_project_server#readme",
+  "description": ""
 }
