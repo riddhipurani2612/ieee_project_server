@@ -291,12 +291,14 @@ router.patch(
     if (!errors.isEmpty()) {
       return res.status(422).json({ errors: errors.array() });
     }
-    const userFound = await dataModel.findOne({ email: req.body.email });
-    if (userFound) {
-      console.log("User exists");
-      return res
-        .status(409)
-        .json({ msg: "This email address can not be used!!" });
+    if(req.body.changed === "true"){
+      const userFound = await dataModel.findOne({ email: req.body.email });
+      if (userFound) {
+        console.log("User exists");
+        return res
+          .status(409)
+          .json({ msg: "This email address can not be used!!" });
+      }  
     }
     console.log(req.body);
     if (req.files) {
@@ -384,14 +386,15 @@ router.patch(
     ],
   ],
   async (req, res) => {
-    const userFound = await dataModel.findOne({ email: req.body.email });
-    if (userFound) {
-      console.log("User exists");
-      return res
-        .status(409)
-        .json({ msg: "This email address can not be used" });
-    }
-    if (req.files) {
+    if(req.body.changed === "true"){
+      const userFound = await dataModel.findOne({ email: req.body.email });
+      if (userFound) {
+        console.log("User exists");
+        return res
+          .status(409)
+          .json({ msg: "This email address can not be used!!" });
+      }  
+    }    if (req.files) {
       try {
         console.log("file");
         const myFile = req.files.file;
