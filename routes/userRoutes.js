@@ -11,7 +11,55 @@ const config = require("config");
 const auth = require("../middleware/auth");
 const { update } = require("../models/user");
 const counterModel = require("../models/counter");
-
+router.post("/addProfile/:email", async (req, res) => {
+  try {
+    const updatedUser = await dataModel.findOne({ email: req.params.email });
+    if (!updatedUser) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+    if (req.files) {
+      try {
+        console.log("file");
+        const myFile = req.files.file;
+        console.log(myFile);
+        try {
+          myFile.mv(`./public/${myFile.name}`, async function (err) {
+            if (err) {
+              console.log(err);
+              return res
+                .status(500)
+                .json({ msg: "Error Occured while uploading file!!" });
+            }
+            const updatedUser = await dataModel.findOne({
+              email: req.params.email,
+            });
+            updatedUser.first_name = updatedUser.first_name;
+            updatedUser.last_name = updatedUser.last_name;
+            updatedUser.email = updatedUser.email;
+            updatedUser.memberid = updatedUser.memberid;
+            updatedUser.contact = updatedUser.contact;
+            updatedUser.workplace = updatedUser.workplace;
+            updatedUser.designation = updatedUser.designation;
+            updatedUser.detailedbio = updatedUser.detailedbio;
+            updatedUser.about = updatedUser.about;
+            updatedUser.profile = myFile.name;
+            await updatedUser.save();
+            console.log(updatedUser);
+            return res.status(200).json(updatedUser);
+          });
+        } catch (error) {
+          console.log(error);
+        }
+      } catch (err) {
+        res.status(404).json({ msg: "User Not Found" });
+      }
+    } else {
+      return res.status(500).json({ msg: "File not found!!" });
+    }
+  } catch (err) {
+    console.log(err);
+  }
+});
 router.post(
   "/changepassword",
   auth,
@@ -132,7 +180,7 @@ router.post(
               .status(500)
               .json({ msg: "Error Occured while uploading file" });
           } else {
-            const profileNew = myFile.name;
+            const detailedbioFile = myFile.name;
             const hashedPassword = await bcrypt.hash(req.body.password, 12);
             console.log(req.body);
             const newData = new dataModel({
@@ -146,7 +194,7 @@ router.post(
               workplace: req.body.workplace,
               designation: req.body.designation,
               password: hashedPassword,
-              profile: profileNew,
+              detailedbio: detailedbioFile,
               about: req.body.about,
             });
             await newData.save();
@@ -291,15 +339,6 @@ router.patch(
     if (!errors.isEmpty()) {
       return res.status(422).json({ errors: errors.array() });
     }
-    if(req.body.changed === "true"){
-      const userFound = await dataModel.findOne({ email: req.body.email });
-      if (userFound) {
-        console.log("User exists");
-        return res
-          .status(409)
-          .json({ msg: "This email address can not be used!!" });
-      }  
-    }
     console.log(req.body);
     if (req.files) {
       try {
@@ -317,12 +356,13 @@ router.patch(
               });
               updatedUser.first_name = req.body.first_name;
               updatedUser.last_name = req.body.last_name;
-              updatedUser.email = req.body.email;
+              updatedUser.email = req.params.email;
               updatedUser.memberid = req.body.memberid;
               updatedUser.contact = req.body.contact;
               updatedUser.workplace = req.body.workplace;
               updatedUser.designation = req.body.designation;
-              updatedUser.profile = myFile.name;
+              updatedUser.profile = req.body.profile;
+              updatedUser.detailedbio = myFile.name;
               updatedUser.about = req.body.about;
               await updatedUser.save();
               console.log(updatedUser);
@@ -342,13 +382,14 @@ router.patch(
         });
         updatedUser.first_name = req.body.first_name;
         updatedUser.last_name = req.body.last_name;
-        updatedUser.email = req.body.email;
+        updatedUser.email = req.params.email;
         updatedUser.grade = req.body.grade;
         updatedUser.memberid = req.body.memberid;
         updatedUser.contact = req.body.contact;
         updatedUser.workplace = req.body.workplace;
         updatedUser.designation = req.body.designation;
-        updatedUser.profile = req.body.file;
+        updatedUser.profile = req.body.profile;
+        updatedUser.detailedbio = req.body.file;
         updatedUser.about = req.body.about;
         await updatedUser.save();
         console.log(updatedUser);
@@ -379,22 +420,13 @@ router.patch(
       check("first_name", "First name is required").not().isEmpty(),
       check("last_name", "Last name is required").not().isEmpty(),
       check("role", "Role is required").not().isEmpty(),
-      check("email", "Email is required").not().isEmpty(),
-      check("email", "Not a valid email id").isEmail(),
       check("workplace", "Workplace is required").not().isEmpty(),
       check("designation", "Designation is required").not().isEmpty(),
     ],
   ],
   async (req, res) => {
-    if(req.body.changed === "true"){
-      const userFound = await dataModel.findOne({ email: req.body.email });
-      if (userFound) {
-        console.log("User exists");
-        return res
-          .status(409)
-          .json({ msg: "This email address can not be used!!" });
-      }  
-    }    if (req.files) {
+    console.log(req.body);
+    if (req.files) {
       try {
         console.log("file");
         const myFile = req.files.file;
@@ -413,7 +445,8 @@ router.patch(
             updatedUser.contact = req.body.contact;
             updatedUser.workplace = req.body.workplace;
             updatedUser.designation = req.body.designation;
-            updatedUser.profile = myFile.name;
+            updatedUser.profile = req.body.profile;
+            updatedUser.detailedbio = myFile.name;
             updatedUser.about = req.body.about;
             await updatedUser.save();
             console.log(updatedUser);
@@ -445,7 +478,8 @@ router.patch(
         updatedUser.memberid = req.body.memberid;
         updatedUser.workplace = req.body.workplace;
         updatedUser.designation = req.body.designation;
-        updatedUser.profile = req.body.file;
+        updatedUser.profile = req.body.profile;
+        updatedUser.detailedbio = req.body.file;
         updatedUser.role = req.body.role;
         updatedUser.about = req.body.about;
         await updatedUser.save();

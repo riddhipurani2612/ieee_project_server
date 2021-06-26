@@ -38,6 +38,9 @@ const user_schema = new mongoose.Schema(
     },
     founder : {
       type : String,
+    },
+    detailedbio : {
+      type : String,
     }
   },
   {
